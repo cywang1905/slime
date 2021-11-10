@@ -3,17 +3,19 @@ package module
 import (
 	"bytes"
 	"context"
-	"os"
-
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	bootconfig "slime.io/slime/framework/apis/config/v1alpha1"
 	"slime.io/slime/framework/bootstrap"
+	"slime.io/slime/framework/model/metric"
+	"slime.io/slime/framework/pkg/metric/controller"
 	"slime.io/slime/framework/util"
 )
 
@@ -25,7 +27,7 @@ type Module interface {
 	Name() string
 	Config() proto.Message
 	InitScheme(scheme *runtime.Scheme) error
-	InitManager(mgr manager.Manager, env bootstrap.Environment, cbs InitCallbacks) error
+	InitManager(env bootstrap.Environment, mgr manager.Manager, mc metric.Controller, cbs InitCallbacks) error
 }
 
 func Main(bundle string, modules []Module) {
@@ -92,9 +94,15 @@ func Main(bundle string, modules []Module) {
 		fatal()
 	}
 
-	client, err := kubernetes.NewForConfig(mgr.GetConfig())
+	clientSet, err := kubernetes.NewForConfig(mgr.GetConfig())
 	if err != nil {
 		log.Errorf("create a new clientSet failed, %+v", err)
+		os.Exit(1)
+	}
+
+	dynamicClient, err := dynamic.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		log.Errorf("create a new dynamic client failed, %+v", err)
 		os.Exit(1)
 	}
 
@@ -106,6 +114,11 @@ func Main(bundle string, modules []Module) {
 	}
 
 	ctx := context.Background()
+
+	// init metric controller
+	mc := controller.NewController(&metric.ControllerConfig{
+		DynamicClient: dynamicClient,
+	})
 
 	for _, mod := range modules {
 		var modCfg *bootconfig.Config
@@ -137,11 +150,11 @@ func Main(bundle string, modules []Module) {
 
 		env := bootstrap.Environment{
 			Config:    modCfg,
-			K8SClient: client,
+			K8SClient: clientSet,
 			Stop:      ctx.Done(),
 		}
 
-		if err := mod.InitManager(mgr, env, cbs); err != nil {
+		if err := mod.InitManager(env, mgr, mc, cbs); err != nil {
 			log.Errorf("mod %s InitManager met err %v", mod.Name(), err)
 			fatal()
 		}
