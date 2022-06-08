@@ -35,8 +35,40 @@ type LabelSvcCache struct {
 	sync.RWMutex
 }
 
+type PortProtocolCache struct {
+	Data map[int32]map[Protocol]int
+	sync.RWMutex
+}
+
 type domainAliasRule struct {
 	pattern   string
 	templates []string
 	re        *regexp.Regexp
 }
+
+type PortProtocol string
+
+const (
+	HTTP    PortProtocol = "http"
+	HTTP2   PortProtocol = "http2"
+	HTTPS   PortProtocol = "https"
+	TCP     PortProtocol = "tcp"
+	TLS     PortProtocol = "tls"
+	GRPC    PortProtocol = "grpc"
+	GRPCWeb PortProtocol = "grpc-web"
+	Mongo   PortProtocol = "mongo"
+	MySQL   PortProtocol = "mysql"
+	Redis   PortProtocol = "redis"
+	Dubbo   PortProtocol = "dubbo"
+	Unknown PortProtocol = "unknown"
+)
+
+// Protocol is the protocol associated with the port
+type Protocol int
+
+const (
+	ProtocolUnknown = iota
+	ProtocolTCP
+	ProtocolHTTP
+	ProtocolDubbo
+)

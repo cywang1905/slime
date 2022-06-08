@@ -95,7 +95,7 @@ func NewReconciler(cfg *lazyloadv1alpha1.Fence, mgr manager.Manager, env bootstr
 	}
 
 	// start service related cache
-	r.nsSvcCache, r.labelSvcCache, err = newSvcCache(env.K8SClient)
+	r.nsSvcCache, r.labelSvcCache, err = r.newSvcCache()
 	if err != nil {
 		log.Errorf("init LabelSvcCache err: %v", err)
 		return nil
