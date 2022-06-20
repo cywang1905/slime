@@ -34,12 +34,13 @@ type SlimeBoot struct {
 }
 
 type SlimeBootSpec struct {
-	Modules        []Module   `json:"module" yaml:"module"`
-	Image          *Image     `json:"image" yaml:"image"`
-	Component      *Component `json:"component" yaml:"component"`
-	Namespace      string     `json:"namespace" yaml:"namespace"`
-	IstioNamespace string     `json:"istioNamespace" yaml:"istioNamespace"`
-	Resources      *Resources `json:"resources" yaml:"resources"`
+	Modules          []Module            `json:"module" yaml:"module"`
+	Image            *Image              `json:"image" yaml:"image"`
+	ImagePullSecrets []map[string]string `json:"imagePullSecrets" yaml:"imagePullSecrets"`
+	Component        *Component          `json:"component" yaml:"component"`
+	Namespace        string              `json:"namespace" yaml:"namespace"`
+	IstioNamespace   string              `json:"istioNamespace" yaml:"istioNamespace"`
+	Resources        *Resources          `json:"resources" yaml:"resources"`
 }
 
 type Component struct {
@@ -54,6 +55,7 @@ type GlobalSidecar struct {
 	Replicas      int            `json:"replicas" yaml:"replicas"`
 	Resources     *Resources     `json:"resources" yaml:"resources"`
 	SidecarInject *SidecarInject `json:"sidecarInject" yaml:"sidecarInject"`
+	OldVersion    bool           `json:"oldVersion" yaml:"oldVersion"`
 }
 
 type SidecarInject struct {
